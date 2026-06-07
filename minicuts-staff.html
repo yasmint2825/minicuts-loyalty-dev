@@ -90,7 +90,7 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
 #clk{font-family:var(--fh);font-size:11px;font-weight:700;color:rgba(255,255,255,.7);}
 </style>
 </head>
-<body>
+<body><div style="position:fixed;top:0;left:0;right:0;background:#DC2626;color:#fff;text-align:center;font-size:12px;font-weight:800;padding:5px;z-index:99999;letter-spacing:.04em;">⚠️  DEV / TEST ENVIRONMENT — changes here do NOT affect live data</div><div style="height:28px;"></div>
 
 <!-- TOPBAR -->
 <div class="top">
@@ -270,6 +270,16 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
 
     <div>
       <div class="card">
+        <div class="card-title">🔗 Quick Links</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+          <a href="./minicuts-checkin.html" target="_blank" class="btn btn-b btn-full">👤 Customer Check-In Screen</a>
+          <a href="./index.html" target="_blank" class="btn btn-ghost btn-full">📋 Loyalty Dashboard</a>
+          <a href="./minicuts-game.html" target="_blank" class="btn btn-ghost btn-full">🎮 Games App</a>
+          <a href="./minicuts-backup.html" target="_blank" class="btn btn-full" style="background:linear-gradient(135deg,#16A34A,#15803D);color:#fff;">💾 Backup Database</a>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-title">💬 WhatsApp Message Template</div>
         <p style="font-size:12.5px;color:var(--muted);margin:6px 0 10px;">Customise the message sent after each stamp. Use these tokens:</p>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
@@ -295,14 +305,6 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
       <div class="card">
         <div class="card-title">📊 Today's Summary</div>
         <div id="cfg-summary" style="color:var(--muted);font-size:13px;">Go to Queue tab to load data first.</div>
-      </div>
-      <div class="card">
-        <div class="card-title">🔗 Quick Links</div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
-          <a href="./minicuts-checkin.html" target="_blank" class="btn btn-b btn-full">👤 Customer Check-In Screen</a>
-          <a href="./index.html" target="_blank" class="btn btn-ghost btn-full">📋 Loyalty Dashboard</a>
-          <a href="./minicuts-game.html" target="_blank" class="btn btn-ghost btn-full">🎮 Games App</a>
-        </div>
       </div>
     </div>
   </div>
@@ -1225,5 +1227,5 @@ setInterval(()=>{if(document.getElementById('t-queue').classList.contains('activ
 // INIT — load config from DB first, then load queue
 loadAllConfig().then(()=>{loadQ();populateStyFilter();});
 </script>
-<div style="position:fixed;bottom:0;left:0;right:0;background:#DC2626;color:#fff;text-align:center;font-weight:900;font-size:13px;padding:4px;z-index:99999;font-family:monospace;letter-spacing:.05em;">⚠️ DEV ENVIRONMENT — NOT PRODUCTION</div></body>
+</body>
 </html>
