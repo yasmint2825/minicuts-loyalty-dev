@@ -382,8 +382,8 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
 <div class="tc" id="TC"></div>
 
 <script>
-const SB_URL='https://flczmpscouzthbcostlg.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsY3ptcHNjb3V6dGhiY29zdGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTEwNTcsImV4cCI6MjA5NjEyNzA1N30.IReZQIA7QS-Kk_iboRfSXtlACfBugotvIi2ETkQUlWg';
+const SB_URL='https://wtapyfgtwkjyjrjdnhkb.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0YXB5Zmd0d2tqeWpyamRuaGtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NDc3ODEsImV4cCI6MjA5NTAyMzc4MX0.y_-iPfb8Pcg9zh42h6RGVBsUVZm80LcA9sPlz_Gl_fA';
 async function sbRaw(path,method='GET',body=null,params=''){
   const url=SB_URL+'/rest/v1/'+path+(params?'?'+params:'');
   const h={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
@@ -621,7 +621,7 @@ function buildLoyaltyInCell(r){
 function buildRow(r){
   const done=r.status==='done';const called=r.status==='called';const cancelled=r.status==='cancelled';
   const guest=r.is_guest||!r.customer_id;const locked=done||cancelled;
-  const sp=done?'<span class="sp sp-d">✅ Done</span>':called?'<span class="sp sp-c">📢 Called</span>':cancelled?'<span class="sp" style="background:#F3F4F6;color:var(--muted);">✕ Cancelled</span>':guest?'<span class="sp sp-g">👤 Guest</span>':'<span class="sp sp-w">⏳ Waiting</span>';
+  const sp=done?'<span class="sp sp-d">✅ Done</span>':called?'<span class="sp sp-c">📢 Called</span>':cancelled?'<span class="sp" style="background:#F3F4F6;color:var(--muted);">✕ Cancelled</span>':'<span class="sp sp-w">⏳ Waiting</span>';
   const sty1Opts='<option value="">— Stylist 1 —</option>'+STYLISTS.map(s=>'<option value="'+s+'"'+(r.stylist===s?' selected':'')+'>'+s+'</option>').join('');
   const sty2Opts='<option value="">— Stylist 2 —</option>'+STYLISTS.map(s=>'<option value="'+s+'"'+(r.stylist2===s?' selected':'')+'>'+s+'</option>').join('');
   const svcOpts=SVCS.map(s=>'<option'+(r.service===s?' selected':'')+'>'+s+'</option>').join('');
@@ -657,18 +657,18 @@ function buildRow(r){
     +'<td><div style="display:flex;gap:3px;align-items:center;margin-bottom:3px;">'
       +'<div style="display:flex;flex-direction:column;align-items:center;gap:1px;">'
         +'<span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">AED</span>'
-        +'<input class="isel" type="number" min="0" max="9999" step="5" placeholder="—" value="'+(svcVal||'')+'" style="width:52px;text-align:center;" '+(locked?'disabled ':'')+
-          'onblur="updF(\''+r.id+'\',\'service_value\',this.value?Number(this.value):null)" onkeydown="if(event.key===\'Enter\')this.blur()"/>'
+        +'<input class="isel" id="aed-'+r.id+'" type="number" min="0" max="9999" step="5" placeholder="—" value="'+(svcVal||'')+'" style="width:68px;text-align:center;" '+(locked?'disabled ':'')+ 
+          'onblur="updF(\'"+r.id+"\'",\'service_value\',this.value?Number(this.value):null);this.style.borderColor=\'\'" onkeydown="if(event.key===\'Enter\')this.blur()"/>'
       +'</div>'
       +'<div style="display:flex;flex-direction:column;align-items:center;gap:1px;">'
         +'<span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Tip</span>'
-        +'<input class="isel" type="number" min="0" max="9999" step="5" placeholder="—" value="'+(tip||'')+'" style="width:44px;text-align:center;" '+(locked?'disabled ':'')+
+        +'<input class="isel" id="tip-'+r.id+'" type="number" min="0" max="9999" step="5" placeholder="—" value="'+(tip||'')+'" style="width:54px;text-align:center;" '+(locked?'disabled ':'')+ 
           'onblur="updF(\''+r.id+'\',\'tip\',this.value?Number(this.value):null)" onkeydown="if(event.key===\'Enter\')this.blur()"/>'
       +'</div>'
       +'<div style="display:flex;flex-direction:column;align-items:center;gap:1px;">'
         +'<span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Pay</span>'
-        +'<select class="isel" style="width:66px;font-size:12px;padding:5px 4px;" '+(locked?'disabled ':'')+
-          'onchange="updF(\''+r.id+'\',\'payment_method\',this.value||null)">'
+        +'<select class="isel" id="pay-'+r.id+'" style="width:82px;font-size:12px;padding:5px 4px;" '+(locked?'disabled ':'')+
+          'onchange="updF(\'"+r.id+"\'",\'payment_method\',this.value||null);this.style.borderColor=\'\'">'  
           +'<option value="" '+((!r.payment_method)?'selected':'')+'>—</option>'
           +'<option value="cash" '+(r.payment_method==='cash'?'selected':'')+'>💵 Cash</option>'
           +'<option value="card" '+(r.payment_method==='card'?'selected':'')+'>💳 Card</option>'
@@ -684,11 +684,12 @@ function buildRow(r){
     +'<td><div style="display:flex;gap:3px;flex-direction:column;">'
     +(done?'<button class="btn btn-ghost btn-sm" onclick="updS(\''+r.id+'\',\'waiting\')">↩ Undo</button>'
     :cancelled?''
-    :(!called?'<button class="btn btn-b btn-sm" style="white-space:nowrap;" onclick="updS(\''+r.id+'\',\'called\')">📢 Call</button>':'')+
-     '<button class="btn btn-g btn-sm" style="white-space:nowrap;" onclick="markDone(\''+r.id+'\',\''+r.customer_id+'\',\''+escQ(r.customer_name)+'\',\''+r.mobile+'\')">✅ Stamp</button>'+
-     '<button class="btn btn-sm" style="background:#F3F4F6;color:var(--muted);white-space:nowrap;" onclick="cancelToken(\''+r.id+'\',\''+escQ(r.customer_name)+'\')">✕</button>')
-    +'</div></td>'
-    +'</tr>';
+    :(!called?'<button class="btn btn-b btn-sm" style="white-space:nowrap;" onclick="updS(\'"+r.id+"\',\'called\')">📢 Call</button>'
+             :'<button class="btn btn-sm" style="background:#EEF6FF;color:var(--b);white-space:nowrap;border:1.5px solid rgba(21,101,192,.25);" onclick="updS(\'"+r.id+"\',\'waiting\')">↩ Waiting</button>')+
+     '<button class="btn btn-g btn-sm" style="white-space:nowrap;" '+(called?'':"disabled ")+
+     '<button class="btn btn-g btn-sm" style="white-space:nowrap;" '+(called?'':"disabled ")+
+       'onclick="markDone(\'"+r.id+"\',\'"+r.customer_id+"\',\'"+escQ(r.customer_name)+"\',\'"+r.mobile+"\')">✅ Stamp</button>'+
+     '<button class="btn btn-sm" style="background:#F3F4F6;color:var(--muted);white-space:nowrap;" onclick="cancelToken(\'"+r.id+"\',\'"+escQ(r.customer_name)+"\')">✕</button>')
 }
 
 function displayMob(m){const s=m.replace(/\D/g,'');if(s.startsWith('971'))return'0'+s.slice(3);return m;}
@@ -758,10 +759,26 @@ function renderHist(){
   const done=data.filter(r=>r.status==='done').length;
   const sumEl=document.getElementById('hist-summary');
   if(sumEl){sumEl.style.display='block';
-    sumEl.innerHTML='📊 <strong>'+date+(isToday?' (Today)':'')+'</strong> · '+data.length+' check-ins · '+done+' served'
-      +(totalRev?' · Revenue: <strong style="color:var(--b);">AED '+totalRev+'</strong>':'')
-      +(totalTips?' · Tips: <strong style="color:var(--ok);">AED '+totalTips+'</strong>':'')
-      +(totalRev||totalTips?' · Combined: <strong>AED '+(totalRev+totalTips)+'</strong>':'');}
+    const cashSales=data.filter(r=>r.payment_method==='cash'&&r.service_value>0).reduce((s,r)=>s+(Number(r.service_value)||0),0);
+    const cardSales=data.filter(r=>r.payment_method==='card'&&r.service_value>0).reduce((s,r)=>s+(Number(r.service_value)||0),0);
+    // Tips by stylist
+    const tipByStylist={};
+    data.forEach(r=>{
+      if(r.tip>0&&r.stylist){
+        tipByStylist[r.stylist]=(tipByStylist[r.stylist]||0)+(Number(r.tip)||0);
+      }
+    });
+    const tipStyStr=Object.keys(tipByStylist).length
+      ?Object.entries(tipByStylist).map(([s,t])=>s+': AED '+t).join(' · '):'';
+    sumEl.innerHTML='<div style="line-height:2;">'
+      +'📊 <strong>'+date+(isToday?' (Today)':'')+'</strong> · '+data.length+' check-ins · '+done+' served'
+      +(totalRev?' &nbsp;|&nbsp; Revenue: <strong style="color:var(--b);">AED '+totalRev+'</strong>':'')
+      +(totalTips?' &nbsp;|&nbsp; Tips: <strong style="color:var(--ok);">AED '+totalTips+'</strong>':'')
+      +(totalRev||totalTips?'<br>💵 Cash: <strong style="color:var(--ok);">AED '+cashSales+'</strong>'
+        +' &nbsp;|&nbsp; 💳 Card: <strong style="color:var(--b);">AED '+cardSales+'</strong>'
+        +' &nbsp;|&nbsp; Combined: <strong>AED '+(totalRev+totalTips)+'</strong>':'')
+      +(tipStyStr?'<br>🤝 Tips by stylist: <span style="color:var(--muted);">'+tipStyStr+'</span>':'')
+      +'</div>';}
   body.innerHTML=data.slice().reverse().map(r=>{
     const done=r.status==='done';const called=r.status==='called';const cancelled=r.status==='cancelled';const guest=r.is_guest;
     const sp=done?'<span class="sp sp-d">✅ Done</span>':called?'<span class="sp sp-c">📢 Called</span>':cancelled?'<span class="sp" style="background:#F3F4F6;color:var(--muted);">✕ Cancelled</span>':'<span class="sp sp-w">⏳ Waiting</span>';
@@ -880,6 +897,13 @@ async function cancelToken(id,name){
   }catch(e){toast('Error: '+e.message,'err');}
 }
 async function markDone(qid,cid,name,mob){
+  // Validate AED and Pay filled before stamping
+  const aedEl=document.getElementById('aed-'+qid);
+  const payEl=document.getElementById('pay-'+qid);
+  let hasErr=false;
+  if(aedEl&&!aedEl.value){aedEl.style.borderColor='var(--err)';aedEl.style.boxShadow='0 0 0 2px rgba(220,38,38,.2)';hasErr=true;}
+  if(payEl&&!payEl.value){payEl.style.borderColor='var(--err)';payEl.style.boxShadow='0 0 0 2px rgba(220,38,38,.2)';hasErr=true;}
+  if(hasErr){toast('Please fill AED amount and payment method first ❌','err');return;}
   const row=document.getElementById('qr-'+qid);
   const inputs=row?.querySelectorAll('input[type="text"],input[type="number"]');
   const svcValInput=row?.querySelectorAll('input[type="number"]')[0];
