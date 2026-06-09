@@ -159,7 +159,7 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
     </div>
     <div id="lu-nf" style="display:none;margin-top:6px;">
       <div class="sm warn" style="display:block;">Mobile not registered yet. Register to get started!</div>
-      <button class="btn btn-b btn-full" onclick="showReg(getM())" style="margin-bottom:8px;">📝 Register (New Customer)</button>
+      <button class="btn btn-b btn-full" onclick="showReg(getM(),_kidsCount)" style="margin-bottom:8px;">📝 Register (New Customer)</button>
       <button class="btn btn-ghost btn-full" onclick="showGuest()" style="opacity:.55;font-size:13px;">Continue without phone</button>
     </div>
     <div style="text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
@@ -347,11 +347,7 @@ function setHear(btn,val){
   btn.style.background='linear-gradient(135deg,var(--y),#FFB300)';
   btn.style.borderColor='var(--yd)';btn.style.color='var(--bd)';
   document.getElementById('lu-hear-err').style.display='none';
-  const ciBtn=document.getElementById('lu-btn');
-  const note=document.getElementById('lu-hear-note');
-  if(note)note.textContent='';
-  const n=_sel.length;
-  if(ciBtn){ciBtn.disabled=false;ciBtn.style.opacity='1';ciBtn.textContent=n===1?'✅ Check In '+_sel[0].name:'✅ Check In '+n+' Children';}
+  updBtn();
 }
 
 function setRegHear(btn,val){
@@ -433,7 +429,12 @@ function setKidsCount(n, btn){
   });
   btn.style.background='var(--bd)'; btn.style.borderColor='var(--bd)'; btn.style.color='#fff';
   document.getElementById('kids-count-err').style.display='none';
-  renderKidsPanel();
+  if(_foundKids.length > 0){
+    // Registered customer — show kids panel
+    renderKidsPanel();
+  }
+  // For new customers (_foundKids=[]), count is stored in _kidsCount;
+  // the Register button passes it along via showReg()
 }
 
 // Build the registered-kids display + new-kid forms based on current count
@@ -540,6 +541,7 @@ async function doLookup(){
     if(!kids.length){
       st.style.display='none';
       document.getElementById('lu-nf').style.display='block';
+      document.getElementById('lu-count').style.display='block';
       return;
     }
 
@@ -786,7 +788,14 @@ async function doGuest(){
 
 
 // REGISTER
-function showReg(mob){_kcount=0;document.getElementById('rg-kids').innerHTML='';if(mob)setPhF('rg-pfx','rg-num',mob);addKid();showScr('s-reg');}
+function showReg(mob, kidCount){
+  _kcount=0;
+  document.getElementById('rg-kids').innerHTML='';
+  if(mob) setPhF('rg-pfx','rg-num',mob);
+  const n = Math.max(1, kidCount||_kidsCount||1);
+  for(let i=0;i<n;i++) addKid();
+  showScr('s-reg');
+}
 function addKid(){
   _kcount++;const id='k'+_kcount;_genders[id]='boy';
   const c=document.getElementById('rg-kids');const b=document.createElement('div');b.className='kid-block';b.id='kb-'+id;
@@ -962,67 +971,6 @@ function resetCI(){
   document.querySelectorAll('.kid-row').forEach(r=>r.classList.remove('selected'));
   document.querySelectorAll('.kid-row input[type=checkbox]').forEach(cb=>{cb.checked=false;});
   navTo('s-lookup','bn-ci');
-}
-
-// GUEST
-let _guestCount = 0;
-let _guestReserved = [];
-
-function showGuest(){
-  document.getElementById('g-fn').value='';
-  document.getElementById('g-ln').value='';
-  document.getElementById('g-svc').value='Haircut';
-  const m=document.getElementById('g-msg');if(m)m.style.display='none';
-  _guestCount=0;_guestReserved=[];
-  document.querySelectorAll('.g-count-btn').forEach(b=>{b.style.background='#fff';b.style.borderColor='var(--border)';b.style.color='var(--bd)';});
-  showScr('s-guest');
-}
-
-function setGuestCount(n, btn){
-  _guestCount=n;
-  _guestReserved=[];
-  document.querySelectorAll('.g-count-btn').forEach(b=>{b.style.background='#fff';b.style.borderColor='var(--border)';b.style.color='var(--bd)';});
-  btn.style.background='var(--bd)';btn.style.borderColor='var(--bd)';btn.style.color='#fff';
-  document.getElementById('g-count-err').style.display='none';
-  // Reserve tokens instantly on tap
-  reserveTokenBlock(n, null).then(toks=>{_guestReserved=toks;}).catch(e=>console.warn('Guest reserve failed:',e.message));
-}
-
-async function doGuest(){
-  const fn=document.getElementById('g-fn').value.trim();
-  const ln=document.getElementById('g-ln').value.trim();
-  const svc=document.getElementById('g-svc').value;
-  const msg=document.getElementById('g-msg');
-  if(!_guestCount){document.getElementById('g-count-err').style.display='block';return;}
-  if(!fn){showM(msg,'First name required ❌','err');return;}
-  if(!ln){showM(msg,'Last name required ❌','err');return;}
-  const btn=document.querySelector('#s-guest .btn-y');
-  if(btn){btn.disabled=true;btn.textContent='Issuing...';}
-  const guestName=fn+' '+ln;
-  try{
-    // If tokens not yet reserved (edge case), reserve now
-    if(!_guestReserved.length){
-      _guestReserved=await reserveTokenBlock(_guestCount, null);
-    }
-    // Update all reserved rows with guest name
-    for(let i=0;i<_guestReserved.length;i++){
-      await sb('queue','PATCH',{
-        customer_name: guestName,
-        service: svc||'Haircut',
-        is_guest: true
-      },'id=eq.'+_guestReserved[i].id);
-    }
-    const tokens=_guestReserved.map(r=>({token:r.token_number,name:guestName,id:null,mobile:null}));
-    _sel=[];
-    refreshStats();
-    if(tokens.length===1){
-      showTok(tokens[0].token,guestName+' (Guest)',null,'⚠️ Guest only — no loyalty or game rewards.',null);
-    } else {
-      showFamTok(tokens,null);
-    }
-    _guestReserved=[];
-  }catch(e){showM(msg,'Error: '+e.message,'err');}
-  finally{if(btn){btn.disabled=false;btn.textContent='Get Token 🎫';}}
 }
 
 // QUEUE - CUSTOMER VIEW

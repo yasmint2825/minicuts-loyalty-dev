@@ -173,7 +173,7 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
   <div id="hist-summary" style="display:none;background:#F0FDF4;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700;color:var(--ok);"></div>
   <div class="tbl-wrap">
     <table class="qt">
-      <thead><tr><th>Token</th><th>Name</th><th>Service</th><th>Stylist(s)</th><th>Value</th><th>Tip</th><th>Remark</th><th>Status</th><th>Time</th><th>Edit</th></tr></thead>
+      <thead><tr><th>Token</th><th>Name</th><th>Service</th><th>Stylist(s)</th><th>Value</th><th>Tip</th><th>Remark</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
       <tbody id="hist-body"><tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted);">Select a date and click Load ↻</td></tr></tbody>
     </table>
   </div>
@@ -728,9 +728,16 @@ function renderHist(){
     const done=r.status==='done';const called=r.status==='called';const cancelled=r.status==='cancelled';const guest=r.is_guest;
     const sp=done?'<span class="sp sp-d">✅ Done</span>':called?'<span class="sp sp-c">📢 Called</span>':cancelled?'<span class="sp" style="background:#F3F4F6;color:var(--muted);">✕ Cancelled</span>':guest?'<span class="sp sp-g">👤 Guest</span>':'<span class="sp sp-w">⏳ Waiting</span>';
     const styStr=[r.stylist,r.stylist2].filter(Boolean).join(' & ');
+    const hasMob=r.mobile&&!String(r.mobile).startsWith('GUEST')&&String(r.mobile).replace(/\D/g,'').length>4;
+    const waHistBtn=hasMob
+      ?'<button class="btn btn-sm" style="background:#25D366;color:#fff;font-size:11px;white-space:nowrap;" onclick="showHistWA(\''+r.id+'\')" >💬 WA</button>'
+      :'';
     return'<tr class="'+(done?'done':called?'called':cancelled?'done':'')+'">'
       +'<td><div class="tok-b '+(guest?'guest':'')+'">'+String(r.token_number).padStart(2,'0')+'</div></td>'
-      +'<td style="font-weight:700;">'+(r.customer_name||'')+'</td>'
+      +'<td>'
+        +'<div style="font-weight:700;">'+(r.customer_name||'')+'</div>'
+        +(hasMob?'<div style="font-size:11px;color:var(--muted);margin-top:1px;">📱 '+displayMob(r.mobile)+'</div>':guest?'<div style="font-size:11px;color:var(--muted);">👤 Guest</div>':'')
+      +'</td>'
       +'<td>'+(r.service||'—')+'</td>'
       +'<td>'+(styStr||'<span style="color:var(--muted);">—</span>')+'</td>'
       +'<td style="font-weight:800;color:var(--b);">'+(r.service_value?'AED '+r.service_value:'—')+'</td>'
@@ -738,7 +745,10 @@ function renderHist(){
       +'<td style="font-size:12px;color:var(--muted);max-width:160px;">'+(r.remark||'—')+'</td>'
       +'<td>'+sp+'</td>'
       +'<td style="font-size:12px;color:var(--muted);">'+fmtT(r.checkin_time)+'</td>'
-      +'<td><button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="editHistRow(\''+r.id+'\')">✏️ Edit</button></td>'
+      +'<td><div style="display:flex;flex-direction:column;gap:4px;">'
+        +'<button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="editHistRow(\''+r.id+'\')" >✏️ Edit</button>'
+        +waHistBtn
+      +'</div></td>'
       +'</tr>';
   }).join('')
   +'<tr style="background:#F0FDF4;font-weight:900;border-top:2px solid #86EFAC;">'
@@ -747,6 +757,54 @@ function renderHist(){
     +'<td style="padding:12px 14px;color:var(--ok);font-size:15px;">AED '+totalTips+'</td>'
     +'<td colspan="4" style="padding:12px 14px;color:var(--muted);font-size:12px;">Combined: AED '+(totalRev+totalTips)+'</td>'
   +'</tr>';
+}
+
+
+function showHistWA(id){
+  const r=_histData.find(x=>x.id===id);if(!r)return;
+  const mob=r.mobile||'';
+  if(!mob||mob.startsWith('GUEST')||mob.replace(/\D/g,'').length<5){toast('No phone number for this customer','err');return;}
+  const name=r.customer_name||'Customer';
+  const stamps=1; // History WA: use generic stamp-count message; actual count not stored in queue row
+  const custData=_custMap[r.customer_id]||{};
+  const actualStamps=Number(custData.stamps||0)||0;
+  const paid=5;
+  const freeMsg=actualStamps>=paid
+    ?'🎉 Amazing news — '+name+' has earned a FREE Hair Wash! Come in anytime to claim it! 🚿'
+    :(actualStamps>0?'You now have '+actualStamps+' stamp'+(actualStamps!==1?'s':'')+' — just '+(paid-actualStamps)+' more haircut'+(paid-actualStamps!==1?'s':'')+' for a FREE hair wash! 🚿':'Thanks for visiting MiniCuts! 🐼');
+  const styStr=[r.stylist,r.stylist2].filter(Boolean).join(' & ');
+  const waMsg=(WA_TEMPLATE||DEFAULT_WA_TEMPLATE)
+    .replace(/\{name\}/g,name)
+    .replace(/\{parent\}/g,custData.parent||name)
+    .replace(/\{stamps\}/g,String(actualStamps))
+    .replace(/\{left\}/g,String(Math.max(0,paid-actualStamps)))
+    .replace(/\{stylist\}/g,styStr||'our stylist')
+    .replace(/\{free_msg\}/g,freeMsg)
+    .replace(/\{passport_link\}/g,WA_PASSPORT_BASE+encodeURIComponent(mob))
+    .replace(/\{google_link\}/g,WA_GOOGLE)
+    .replace(/\{insta_link\}/g,WA_INSTA);
+  const wa='https://wa.me/'+toWANum(mob)+'?text='+encodeURIComponent(waMsg);
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:18px;padding:24px;max-width:420px;width:100%;">'
+    +'<div style="text-align:center;margin-bottom:14px;">'
+      +'<div style="font-size:40px;margin-bottom:8px;">💬</div>'
+      +'<div style="font-family:var(--fh);font-size:19px;font-weight:800;color:var(--bd);">Send WhatsApp</div>'
+      +'<div style="font-size:13px;color:var(--muted);margin-top:4px;">'+name+' · 📱 '+displayMob(mob)+'</div>'
+    +'</div>'
+    +'<div style="margin-bottom:12px;">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;">Message Preview — tap to edit</div>'
+      +'<textarea id="wa-hist-preview" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;line-height:1.6;resize:vertical;font-family:inherit;min-height:140px;outline:none;">'+waMsg.replace(/</g,'&lt;')+'</textarea>'
+    +'</div>'
+    +'<a id="wa-hist-send" href="'+wa+'" target="_blank" style="display:block;width:100%;padding:12px;background:#25D366;color:#fff;border-radius:11px;font-family:var(--fh);font-size:15px;font-weight:800;text-decoration:none;margin-bottom:9px;text-align:center;box-sizing:border-box;">💬 Send WhatsApp</a>'
+    +'<button style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:9px;background:transparent;cursor:pointer;font-family:var(--fh);font-size:14px;font-weight:700;">Close</button>'
+    +'</div>';
+  const preview=ov.querySelector('#wa-hist-preview');
+  const sendBtn=ov.querySelector('#wa-hist-send');
+  if(preview&&sendBtn){preview.addEventListener('input',function(){sendBtn.href='https://wa.me/'+toWANum(mob)+'?text='+encodeURIComponent(this.value);});}
+  ov.querySelector('button').addEventListener('click',()=>ov.remove());
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+  document.body.appendChild(ov);
 }
 
 function editHistRow(id){
