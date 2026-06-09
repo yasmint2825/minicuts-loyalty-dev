@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
-<title>DEV · MiniCuts Check In</title>
+<title>MiniCuts · Check In</title>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
 :root{--y:#FFD600;--b:#1565C0;--bd:#0D47A1;--bm:#1976D2;--ok:#16A34A;--err:#DC2626;--warn:#D97706;--pink:#EC4899;--bg:#EEF4FF;--text:#1A1A2E;--muted:#6B7280;--border:#E5E7EB;--r:16px;--rs:10px;--fh:'Baloo 2',cursive;--fb:'Nunito',sans-serif;}
@@ -285,8 +285,11 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
       </div>
       <div id="g-count-err" style="display:none;margin-top:8px;font-size:12px;font-weight:700;color:var(--err);">Please select how many kids ☝️</div>
     </div>
-    <div id="g-names-wrap" style="display:none;"></div>
-    <div class="fg" style="display:none;" id="g-svc-wrap"><label class="fl">Service (all kids)</label>
+    <div class="fr" style="margin-bottom:0;">
+      <div class="fg"><label class="fl">First Name *</label><input class="fi" type="text" id="g-fn" placeholder="e.g. Omar" maxlength="25"/></div>
+      <div class="fg"><label class="fl">Last Name *</label><input class="fi" type="text" id="g-ln" placeholder="e.g. Al Rashid" maxlength="30"/></div>
+    </div>
+    <div class="fg"><label class="fl">Service</label>
       <select class="fi" id="g-svc"><option>Haircut</option><option>Haircut + Wash</option><option>Wash Only</option><option>Styling</option><option>Other</option></select>
     </div>
     <div id="g-msg" class="sm"></div>
@@ -396,19 +399,14 @@ let _kidsCount = 0;
 // Inserts placeholder rows immediately so no one can steal the spots
 let _reservedTokens = []; // [{id, token_number}]
 
-let _reserving = false; // prevent concurrent reservations
-
-// Always creates fresh reserved placeholder rows in the queue
 async function reserveTokenBlock(n, mob){
-  // Prevent race condition: wait if another reservation is in progress
-  let wait = 0;
-  while(_reserving && wait < 10){ await new Promise(r=>setTimeout(r,150)); wait++; }
-  _reserving = true;
+  _reservedTokens = [];
   const t = today();
   const now = new Date().toISOString();
-  // Fetch last token across ALL statuses (including cancelled) to avoid reuse
+  // Fetch last token
   const ex = await sb('queue','GET',null,'select=token_number&checkin_date=eq.'+t+'&order=token_number.desc&limit=1');
   const lastTok = (ex&&ex.length) ? Number(ex[0].token_number)||0 : 0;
+  // Build placeholder rows
   const rows = [];
   for(let i=0;i<n;i++){
     rows.push({
@@ -425,22 +423,11 @@ async function reserveTokenBlock(n, mob){
       heard_via: null
     });
   }
-  try{
-    const inserted = await sb('queue','POST', rows.length===1?rows[0]:rows);
-    const arr = Array.isArray(inserted)?inserted:[inserted];
-    _reservedTokens = arr.map((r,i)=>({id:r.id, token_number:lastTok+1+i}));
-    return _reservedTokens;
-  } finally {
-    _reserving = false;
-  }
-}
-
-// Only reserves if _reservedTokens is empty — NEVER wipes existing reservations
-async function ensureTokens(n, mob){
-  if(_reservedTokens && _reservedTokens.length > 0){
-    return _reservedTokens; // already reserved — use them, don't touch them
-  }
-  return await reserveTokenBlock(n, mob);
+  // Insert all at once
+  const inserted = await sb('queue','POST', rows.length===1?rows[0]:rows);
+  const arr = Array.isArray(inserted)?inserted:[inserted];
+  _reservedTokens = arr.map((r,i)=>({id:r.id, token_number:lastTok+1+i}));
+  return _reservedTokens;
 }
 
 async function setKidsCount(n, btn){
@@ -509,9 +496,10 @@ async function proceedCheckin(){
     // ── USE PRE-RESERVED TOKENS (reserved on kids count tap) ──
     // If tokens already reserved, update them with real customer data
     // If not reserved yet (edge case), fall back to fresh reservation
-    // ensureTokens: uses existing reservations, only creates new if empty
-    await ensureTokens(_kidsCount, mob);
     let reserved = _reservedTokens;
+    if(!reserved.length){
+      reserved = await reserveTokenBlock(_kidsCount, mob);
+    }
 
     // ── KEY FIX: if fewer kids selected than reserved, CANCEL the extras ──
     // Cancelled status: token number is retired for the day (no gaps, no reuse)
@@ -686,14 +674,7 @@ function updBtn(){
 }
 
 // REGISTER
-function showReg(mob){
-  _kcount=0;document.getElementById('rg-kids').innerHTML='';
-  if(mob)setPhF('rg-pfx','rg-num',mob);
-  // Pre-populate fields for each kid if count already selected
-  const n = _kidsCount||1;
-  for(let i=0;i<n;i++) addKid();
-  showScr('s-reg');
-}
+function showReg(mob){_kcount=0;document.getElementById('rg-kids').innerHTML='';if(mob)setPhF('rg-pfx','rg-num',mob);addKid();showScr('s-reg');}
 function addKid(){
   _kcount++;const id='k'+_kcount;_genders[id]='boy';
   const c=document.getElementById('rg-kids');const b=document.createElement('div');b.className='kid-block';b.id='kb-'+id;
@@ -747,8 +728,10 @@ async function doRegAll(){
     }
     showM(msg,'✅ Registered! Issuing tokens...','ok');
     const tokens=[];
-    // Use pre-reserved tokens — ensureTokens NEVER wipes existing reservations
-    await ensureTokens(results.length, mob);
+    // Use pre-reserved tokens if available, otherwise reserve now
+    if(!_reservedTokens.length){
+      await reserveTokenBlock(results.length, mob);
+    }
     // Cancel any extra reserved slots not matched by actual registered kids
     if(_reservedTokens.length > results.length){
       const extras = _reservedTokens.slice(results.length);
@@ -948,9 +931,10 @@ function resetCI(){
   clearInterval(window._ciTimer);
   // Clean up any unredeemed placeholder reservations
   if(_reservedTokens && _reservedTokens.length){
-    const old=[..._reservedTokens]; _reservedTokens=[];
-    old.forEach(r=>sb('queue','PATCH',{status:'cancelled',customer_name:'Cancelled',customer_id:null},'id=eq.'+r.id).catch(()=>{}));
+    _reservedTokens.forEach(r=>sb('queue','DELETE',null,'id=eq.'+r.id+'&customer_name=eq.Reserving...').catch(()=>{}));
+    _reservedTokens=[];
   }
+  _reservedTokens=[];
   // Full field reset
   const numEl=document.getElementById('lu-num');if(numEl)numEl.value='';
   ['lu-st','lu-kids','lu-act','lu-nf','lu-reg-sibling','lu-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
@@ -967,8 +951,8 @@ let _guestCount = 0;
 let _guestReserved = [];
 
 function showGuest(){
-  const wrap=document.getElementById('g-names-wrap');if(wrap){wrap.innerHTML='';wrap.style.display='none';}
-  const svcWrap=document.getElementById('g-svc-wrap');if(svcWrap)svcWrap.style.display='none';
+  document.getElementById('g-fn').value='';
+  document.getElementById('g-ln').value='';
   document.getElementById('g-svc').value='Haircut';
   const m=document.getElementById('g-msg');if(m)m.style.display='none';
   _guestCount=0;_guestReserved=[];
@@ -977,74 +961,40 @@ function showGuest(){
 }
 
 function setGuestCount(n, btn){
-  // Cancel previous guest reservations
-  if(_guestReserved && _guestReserved.length){
-    const old=[..._guestReserved]; _guestReserved=[];
-    old.forEach(r=>sb('queue','PATCH',{status:'cancelled',customer_name:'Cancelled',customer_id:null},'id=eq.'+r.id).catch(()=>{}));
-  }
   _guestCount=n;
   _guestReserved=[];
   document.querySelectorAll('.g-count-btn').forEach(b=>{b.style.background='#fff';b.style.borderColor='var(--border)';b.style.color='var(--bd)';});
   btn.style.background='var(--bd)';btn.style.borderColor='var(--bd)';btn.style.color='#fff';
   document.getElementById('g-count-err').style.display='none';
-
-  // Build N name fields
-  const wrap = document.getElementById('g-names-wrap');
-  if(wrap){
-    wrap.style.display='block';
-    wrap.innerHTML = Array.from({length:n},(_,i)=>
-      '<div style="margin-bottom:10px;">'
-        +'<div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;color:var(--b);margin-bottom:5px;">Kid '+(i+1)+(n>1?' of '+n:'')+'</div>'
-        +'<div class="fr">'
-          +'<div class="fg"><label class="fl">First Name *</label><input class="fi" type="text" id="g-fn-'+i+'" placeholder="e.g. Omar" maxlength="25"/></div>'
-          +'<div class="fg"><label class="fl">Last Name *</label><input class="fi" type="text" id="g-ln-'+i+'" placeholder="e.g. Al Rashid" maxlength="30"/></div>'
-        +'</div>'
-      +'</div>'
-    ).join('');
-  }
-  const svcWrap=document.getElementById('g-svc-wrap');
-  if(svcWrap) svcWrap.style.display='block';
-
   // Reserve tokens instantly on tap
   reserveTokenBlock(n, null).then(toks=>{_guestReserved=toks;}).catch(e=>console.warn('Guest reserve failed:',e.message));
 }
 
 async function doGuest(){
+  const fn=document.getElementById('g-fn').value.trim();
+  const ln=document.getElementById('g-ln').value.trim();
   const svc=document.getElementById('g-svc').value;
   const msg=document.getElementById('g-msg');
   if(!_guestCount){document.getElementById('g-count-err').style.display='block';return;}
-  // Collect all kid names
-  const kidNames=[];
-  for(let i=0;i<_guestCount;i++){
-    const fn=(document.getElementById('g-fn-'+i)?.value||'').trim();
-    const ln=(document.getElementById('g-ln-'+i)?.value||'').trim();
-    if(!fn){showM(msg,'Please enter first name for Kid '+(i+1)+' ❌','err');return;}
-    if(!ln){showM(msg,'Please enter last name for Kid '+(i+1)+' ❌','err');return;}
-    kidNames.push(fn+' '+ln);
-  }
+  if(!fn){showM(msg,'First name required ❌','err');return;}
+  if(!ln){showM(msg,'Last name required ❌','err');return;}
   const btn=document.querySelector('#s-guest .btn-y');
   if(btn){btn.disabled=true;btn.textContent='Issuing...';}
+  const guestName=fn+' '+ln;
   try{
-    // Use pre-reserved tokens — ensureTokens NEVER wipes existing reservations
+    // If tokens not yet reserved (edge case), reserve now
     if(!_guestReserved.length){
-      _guestReserved = await reserveTokenBlock(_guestCount, null);
+      _guestReserved=await reserveTokenBlock(_guestCount, null);
     }
-    // Cancel extras if somehow fewer names than reserved
-    if(_guestReserved.length > kidNames.length){
-      const extras=_guestReserved.slice(kidNames.length);
-      await Promise.all(extras.map(r=>sb('queue','PATCH',{status:'cancelled',customer_name:'Cancelled',customer_id:null},'id=eq.'+r.id).catch(()=>{})));
-      _guestReserved=_guestReserved.slice(0,kidNames.length);
-    }
-    // Update each reserved row with that kid's name
+    // Update all reserved rows with guest name
     for(let i=0;i<_guestReserved.length;i++){
       await sb('queue','PATCH',{
-        customer_name: kidNames[i],
+        customer_name: guestName,
         service: svc||'Haircut',
-        is_guest: true,
-        status: 'waiting'
+        is_guest: true
       },'id=eq.'+_guestReserved[i].id);
     }
-    const tokens=_guestReserved.map((r,i)=>({token:r.token_number,name:kidNames[i],id:null,mobile:null}));
+    const tokens=_guestReserved.map(r=>({token:r.token_number,name:guestName,id:null,mobile:null}));
     _sel=[];
     refreshStats();
     if(tokens.length===1){
