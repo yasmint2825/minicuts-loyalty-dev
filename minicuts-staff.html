@@ -52,7 +52,7 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
 .qt th:nth-child(3),.qt td:nth-child(3){width:95px;}
 .qt th:nth-child(4),.qt td:nth-child(4){width:46px;}
 .qt th:nth-child(5),.qt td:nth-child(5){width:160px;}
-.qt th:nth-child(6),.qt td:nth-child(6){width:200px;}
+.qt th:nth-child(6),.qt td:nth-child(6){width:240px;}
 .qt th:nth-child(7),.qt td:nth-child(7){width:66px;}
 .qt th:nth-child(8),.qt td:nth-child(8){width:110px;}
 .qt tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
@@ -112,7 +112,7 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
 </div>
 
 <!-- STATS STRIP -->
-<div class="stats-strip">
+<div class="stats-strip" style="flex-wrap:wrap;row-gap:6px;">
   <div class="sstat"><div class="sstat-n" id="st-w" style="color:var(--warn);">—</div><div class="sstat-l">Waiting</div></div>
   <div class="sstat-div"></div>
   <div class="sstat"><div class="sstat-n" id="st-c" style="color:var(--b);">—</div><div class="sstat-l">Called</div></div>
@@ -120,6 +120,13 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
   <div class="sstat"><div class="sstat-n" id="st-d" style="color:var(--ok);">—</div><div class="sstat-l">Done Today</div></div>
   <div class="sstat-div"></div>
   <div class="sstat"><div class="sstat-n" id="st-n" style="color:var(--y);">—</div><div class="sstat-l">Next Token</div></div>
+  <div class="sstat-div"></div>
+  <div class="sstat"><div class="sstat-n" id="st-rev" style="color:var(--bd);font-size:16px;">—</div><div class="sstat-l">Revenue</div></div>
+  <div class="sstat-div"></div>
+  <div class="sstat" style="flex-direction:column;align-items:flex-start;gap:0;">
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">Tips by Staff</div>
+    <div id="st-tips" style="font-size:11.5px;font-weight:700;color:var(--ok);white-space:nowrap;">—</div>
+  </div>
 </div>
 
 <!-- ══ TAB: QUEUE ══ -->
@@ -138,7 +145,7 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
     <table class="qt" id="qt">
       <thead><tr>
         <th>Token</th><th>Name</th><th>Service</th><th>Time</th>
-        <th>Stylist(s)</th><th>Value · Tip · Remark</th><th>Status</th><th>Actions</th>
+        <th>Stylist(s)</th><th>Value · Tip · Pay · Remark</th><th>Status</th><th>Actions</th>
       </tr></thead>
       <tbody id="qt-body"><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);">Loading queue...</td></tr></tbody>
     </table>
@@ -494,6 +501,28 @@ function updateStats(){
   const e=id=>document.getElementById(id);
   if(e('st-w'))e('st-w').textContent=w;if(e('st-c'))e('st-c').textContent=c;
   if(e('st-d'))e('st-d').textContent=d;if(e('st-n'))e('st-n').textContent=nx?String(nx.token_number).padStart(2,'0'):'—';
+  // Revenue
+  const done=_qdata.filter(r=>r.status==='done');
+  const totalRev=done.reduce((s,r)=>s+(Number(r.service_value)||0),0);
+  if(e('st-rev'))e('st-rev').textContent=totalRev?'AED '+totalRev:'—';
+  // Tip split by staff
+  const tipMap={};
+  done.forEach(r=>{
+    const tip=Number(r.tip)||0; if(!tip)return;
+    const stylists=[r.stylist,r.stylist2].filter(Boolean);
+    if(!stylists.length){
+      tipMap['Unassigned']=(tipMap['Unassigned']||0)+tip;
+    } else {
+      const share=Math.round((tip/stylists.length)*10)/10;
+      stylists.forEach(s=>{tipMap[s]=(tipMap[s]||0)+share;});
+    }
+  });
+  const tipEl=e('st-tips');
+  if(tipEl){
+    const entries=Object.entries(tipMap);
+    if(!entries.length){tipEl.textContent='—';}
+    else{tipEl.innerHTML=entries.map(([s,v])=>'<span style="margin-right:10px;">✂️ <strong>'+s+'</strong> AED '+v+'</span>').join('');}
+  }
 }
 
 function renderQ(){
@@ -551,7 +580,7 @@ function buildLoyaltyInCell(r){
 function buildRow(r){
   const done=r.status==='done';const called=r.status==='called';const cancelled=r.status==='cancelled';
   const guest=r.is_guest||!r.customer_id;const locked=done||cancelled;
-  const sp=done?'<span class="sp sp-d">✅ Done</span>':called?'<span class="sp sp-c">📢 Called</span>':cancelled?'<span class="sp" style="background:#F3F4F6;color:var(--muted);">✕ Cancelled</span>':guest?'<span class="sp sp-g">👤 Guest</span>':'<span class="sp sp-w">⏳ Waiting</span>';
+  const sp=done?'<span class="sp sp-d">✅ Done</span>':called?'<span class="sp sp-c">📢 Called</span>':cancelled?'<span class="sp" style="background:#F3F4F6;color:var(--muted);">✕ Cancelled</span>':'<span class="sp sp-w">⏳ Waiting</span>';
   const sty1Opts='<option value="">— Stylist 1 —</option>'+STYLISTS.map(s=>'<option value="'+s+'"'+(r.stylist===s?' selected':'')+'>'+s+'</option>').join('');
   const sty2Opts='<option value="">— Stylist 2 —</option>'+STYLISTS.map(s=>'<option value="'+s+'"'+(r.stylist2===s?' selected':'')+'>'+s+'</option>').join('');
   const svcOpts=SVCS.map(s=>'<option'+(r.service===s?' selected':'')+'>'+s+'</option>').join('');
@@ -583,22 +612,32 @@ function buildRow(r){
       +'<select class="isel" style="flex:1;min-width:0;" onchange="updF(\''+r.id+'\',\'stylist\',this.value)"'+(locked?' disabled':'')+'>'+sty1Opts+'</select>'
       +'<select class="isel" style="flex:1;min-width:0;" onchange="updF(\''+r.id+'\',\'stylist2\',this.value)"'+(locked?' disabled':'')+'>'+sty2Opts+'</select>'
     +'</div></td>'
-    // Val + Tip on top row with labels, Remark smaller below
-    +'<td><div style="display:flex;gap:3px;align-items:center;margin-bottom:3px;">'
-      +'<div style="display:flex;flex-direction:column;align-items:center;gap:1px;">'
-        +'<span style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;">AED</span>'
-        +'<input class="isel" type="number" min="0" max="9999" step="5" placeholder="—" value="'+(svcVal||'')+'" style="width:52px;text-align:center;" '+(locked?'disabled ':'')+
-          'onblur="updF(\''+r.id+'\',\'service_value\',this.value?Number(this.value):null)" onkeydown="if(event.key===\'Enter\')this.blur()"/>'
-      +'</div>'
-      +'<div style="display:flex;flex-direction:column;align-items:center;gap:1px;">'
-        +'<span style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;">Tip</span>'
-        +'<input class="isel" type="number" min="0" max="9999" step="5" placeholder="—" value="'+(tip||'')+'" style="width:44px;text-align:center;" '+(locked?'disabled ':'')+
-          'onblur="updF(\''+r.id+'\',\'tip\',this.value?Number(this.value):null)" onkeydown="if(event.key===\'Enter\')this.blur()"/>'
-      +'</div>'
-    +'</div>'
-    +'<input class="isel" type="text" placeholder="Remark..." maxlength="40" value="'+remark+'" style="width:100%;font-size:10.5px;padding:3px 5px;color:var(--muted);" '+(locked?'disabled ':'')+
-      'onblur="updF(\''+r.id+'\',\'remark\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"/>'
-    +'</td>'
+    // Val + Tip + Payment row, Remark below
+    +(()=>{
+      const pmtVal=r.payment_type||'';
+      const pmtOpts=['','Cash','Credit'].map(p=>'<option value="'+p+'"'+(pmtVal===p?' selected':'')+'>'+( p||'— Pay —')+'</option>').join('');
+      return '<td>'
+        +'<div style="display:flex;gap:4px;align-items:flex-end;margin-bottom:3px;">'
+          +'<div style="display:flex;flex-direction:column;align-items:center;gap:1px;">'
+            +'<span style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;">AED</span>'
+            +'<input id="aed-'+r.id+'" class="isel" type="number" min="0" max="9999" step="5" placeholder="—" value="'+(svcVal||'')+'" style="width:62px;text-align:center;" '+(locked?'disabled ':'')+
+              'onblur="updF(\''+r.id+'\',\'service_value\',this.value?Number(this.value):null)" onkeydown="if(event.key===\'Enter\')this.blur()"/>'
+          +'</div>'
+          +'<div style="display:flex;flex-direction:column;align-items:center;gap:1px;">'
+            +'<span style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;">Tip</span>'
+            +'<input id="tip-'+r.id+'" class="isel" type="number" min="0" max="9999" step="5" placeholder="—" value="'+(tip||'')+'" style="width:56px;text-align:center;" '+(locked?'disabled ':'')+
+              'onblur="updF(\''+r.id+'\',\'tip\',this.value?Number(this.value):null)" onkeydown="if(event.key===\'Enter\')this.blur()"/>'
+          +'</div>'
+          +'<div style="display:flex;flex-direction:column;align-items:center;gap:1px;">'
+            +'<span style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;">Pay</span>'
+            +'<select id="pmt-'+r.id+'" class="isel" style="width:68px;font-size:11px;" '+(locked?'disabled ':'')+
+              'onchange="updF(\''+r.id+'\',\'payment_type\',this.value)">'+pmtOpts+'</select>'
+          +'</div>'
+        +'</div>'
+        +'<input class="isel" type="text" placeholder="Remark..." maxlength="40" value="'+remark+'" style="width:100%;font-size:10.5px;padding:3px 5px;color:var(--muted);" '+(locked?'disabled ':'')+
+          'onblur="updF(\''+r.id+'\',\'remark\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"/>'
+        +'</td>';
+    })()
     // Status
     +'<td>'+sp+'</td>'
     // Actions
@@ -606,7 +645,9 @@ function buildRow(r){
     +(done?'<button class="btn btn-ghost btn-sm" onclick="updS(\''+r.id+'\',\'waiting\')">↩ Undo</button>'
     :cancelled?''
     :(!called?'<button class="btn btn-b btn-sm" style="white-space:nowrap;" onclick="updS(\''+r.id+'\',\'called\')">📢 Call</button>':'')+
-     '<button class="btn btn-g btn-sm" style="white-space:nowrap;" onclick="markDone(\''+r.id+'\',\''+r.customer_id+'\',\''+escQ(r.customer_name)+'\',\''+r.mobile+'\')">✅ Stamp</button>'+
+     '<button class="btn btn-g btn-sm" style="white-space:nowrap;" '
+       +(!called?'disabled title="Call the customer first" style="opacity:.4;cursor:not-allowed;" ':'')
+       +'onclick="markDone(\''+r.id+'\',\''+r.customer_id+'\',\''+escQ(r.customer_name)+'\',\''+r.mobile+'\')">✅ Stamp</button>'+
      '<button class="btn btn-sm" style="background:#F3F4F6;color:var(--muted);white-space:nowrap;" onclick="cancelToken(\''+r.id+'\',\''+escQ(r.customer_name)+'\')">✕</button>')
     +'</div></td>'
     +'</tr>';
@@ -728,11 +769,17 @@ function editHistRow(id){
           <div><label style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:5px;">Stylist 2</label>
             <select id="eh-sty2" class="fi" style="font-size:13px;"><option value="">— None —</option>${sty2Opts}</select></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
           <div><label style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:5px;">💵 Service Value (AED)</label>
             <input id="eh-val" class="fi" type="number" min="0" step="5" value="${r.service_value||''}" placeholder="0" style="font-size:13px;"/></div>
           <div><label style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:5px;">💰 Tip (AED)</label>
             <input id="eh-tip" class="fi" type="number" min="0" step="5" value="${r.tip||''}" placeholder="0" style="font-size:13px;"/></div>
+          <div><label style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:5px;">💳 Payment</label>
+            <select id="eh-pmt" class="fi" style="font-size:13px;">
+              <option value="">— Select —</option>
+              <option value="Cash"${r.payment_type==='Cash'?' selected':''}>💵 Cash</option>
+              <option value="Credit"${r.payment_type==='Credit'?' selected':''}>💳 Credit</option>
+            </select></div>
         </div>
         <div><label style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:5px;">📝 Remark</label>
           <input id="eh-rem" class="fi" type="text" maxlength="120" value="${escQ(r.remark||'')}" placeholder="Optional note..." style="font-size:13px;"/></div>
@@ -757,11 +804,12 @@ async function saveHistEdit(id,btn){
   const msg=document.getElementById('eh-msg');
   const service_value=val?Number(val):null;
   const tipVal=tip?Number(tip):null;
+  const payment_type=document.getElementById('eh-pmt')?.value||null;
   if(btn){btn.disabled=true;btn.textContent='Saving...';}
   try{
-    await sb('queue','PATCH',{service:svc,stylist:sty1,stylist2:sty2,service_value,tip:tipVal,remark:rem},'id=eq.'+id);
+    await sb('queue','PATCH',{service:svc,stylist:sty1,stylist2:sty2,service_value,tip:tipVal,remark:rem,payment_type},'id=eq.'+id);
     const r=_histData.find(x=>x.id===id)||_qdata.find(x=>x.id===id);
-    if(r){r.service=svc;r.stylist=sty1;r.stylist2=sty2;r.service_value=service_value;r.tip=tipVal;r.remark=rem;}
+    if(r){r.service=svc;r.stylist=sty1;r.stylist2=sty2;r.service_value=service_value;r.tip=tipVal;r.remark=rem;r.payment_type=payment_type;}
     renderHist();
     toast('Record updated ✅');
     btn.closest('[style*=fixed]').remove();
@@ -791,19 +839,29 @@ async function cancelToken(id,name){
 }
 async function markDone(qid,cid,name,mob){
   const row=document.getElementById('qr-'+qid);
-  const inputs=row?.querySelectorAll('input[type="text"],input[type="number"]');
-  const svcValInput=row?.querySelectorAll('input[type="number"]')[0];
-  const tipInput=row?.querySelectorAll('input[type="number"]')[1];
+  const svcValInput=document.getElementById('aed-'+qid)||row?.querySelectorAll('input[type="number"]')[0];
+  const tipInput=document.getElementById('tip-'+qid)||row?.querySelectorAll('input[type="number"]')[1];
+  const pmtSelect=document.getElementById('pmt-'+qid);
   const remarkInput=row?.querySelector('input[type="text"]');
   const remark=(remarkInput?.value||'').trim()||null;
   const tip=tipInput?.value?Number(tipInput.value):null;
   const service_value=svcValInput?.value?Number(svcValInput.value):null;
+  const payment_type=pmtSelect?.value||null;
+  // Validation: AED and payment type are required
+  if(!service_value){
+    if(svcValInput){svcValInput.style.borderColor='var(--err)';svcValInput.focus();}
+    toast('Enter AED value before stamping ❌','err');return;
+  }
+  if(!payment_type){
+    if(pmtSelect){pmtSelect.style.borderColor='var(--err)';pmtSelect.focus();}
+    toast('Select Cash or Credit before stamping ❌','err');return;
+  }
   const qRow=_qdata.find(x=>x.id===qid);
   const stylist=qRow?.stylist||null;
   const stylist2=qRow?.stylist2||null;
   const doneBtn=row?.querySelector('.btn-g');if(doneBtn){doneBtn.disabled=true;doneBtn.textContent='...';}
   try{
-    await sb('queue','PATCH',{status:'done',done_at:new Date().toISOString(),remark,tip,service_value},'id=eq.'+qid);
+    await sb('queue','PATCH',{status:'done',done_at:new Date().toISOString(),remark,tip,service_value,payment_type},'id=eq.'+qid);
     if(cid&&cid!=='null'&&cid){
       const rows=await sb('customers','GET',null,'select=*&id=eq.'+cid);
       if(rows?.length){
@@ -828,7 +886,7 @@ async function markDone(qid,cid,name,mob){
         showWAPrompt(name,ns,mob,c.parent,c.gender,stylist,stylist2,remark,tip,service_value);
       }
     } else { toast(name+' done (guest)'+(service_value?' · AED '+service_value:'')+(tip?' · Tip AED '+tip:''),'info'); }
-    if(qRow){qRow.status='done';qRow.remark=remark;qRow.tip=tip;qRow.service_value=service_value;}
+    if(qRow){qRow.status='done';qRow.remark=remark;qRow.tip=tip;qRow.service_value=service_value;qRow.payment_type=payment_type;}
     renderQ();renderHist();updateStats();
   }catch(e){toast('Error: '+e.message,'err');if(doneBtn){doneBtn.disabled=false;doneBtn.textContent='✅ Done+Stamp';}}
 }
