@@ -397,18 +397,18 @@ let _kidsCount = 0;
 let _reservedTokens = []; // [{id, token_number}]
 
 let _reserving = false; // prevent concurrent reservations
+
+// Always creates fresh reserved placeholder rows in the queue
 async function reserveTokenBlock(n, mob){
-  // Prevent race condition: if already reserving, wait briefly and retry
+  // Prevent race condition: wait if another reservation is in progress
   let wait = 0;
   while(_reserving && wait < 10){ await new Promise(r=>setTimeout(r,150)); wait++; }
   _reserving = true;
-  _reservedTokens = [];
   const t = today();
   const now = new Date().toISOString();
   // Fetch last token across ALL statuses (including cancelled) to avoid reuse
   const ex = await sb('queue','GET',null,'select=token_number&checkin_date=eq.'+t+'&order=token_number.desc&limit=1');
   const lastTok = (ex&&ex.length) ? Number(ex[0].token_number)||0 : 0;
-  // Build placeholder rows
   const rows = [];
   for(let i=0;i<n;i++){
     rows.push({
@@ -425,7 +425,6 @@ async function reserveTokenBlock(n, mob){
       heard_via: null
     });
   }
-  // Insert all at once
   try{
     const inserted = await sb('queue','POST', rows.length===1?rows[0]:rows);
     const arr = Array.isArray(inserted)?inserted:[inserted];
@@ -434,6 +433,14 @@ async function reserveTokenBlock(n, mob){
   } finally {
     _reserving = false;
   }
+}
+
+// Only reserves if _reservedTokens is empty — NEVER wipes existing reservations
+async function ensureTokens(n, mob){
+  if(_reservedTokens && _reservedTokens.length > 0){
+    return _reservedTokens; // already reserved — use them, don't touch them
+  }
+  return await reserveTokenBlock(n, mob);
 }
 
 async function setKidsCount(n, btn){
@@ -502,10 +509,9 @@ async function proceedCheckin(){
     // ── USE PRE-RESERVED TOKENS (reserved on kids count tap) ──
     // If tokens already reserved, update them with real customer data
     // If not reserved yet (edge case), fall back to fresh reservation
+    // ensureTokens: uses existing reservations, only creates new if empty
+    await ensureTokens(_kidsCount, mob);
     let reserved = _reservedTokens;
-    if(!reserved.length){
-      reserved = await reserveTokenBlock(_kidsCount, mob);
-    }
 
     // ── KEY FIX: if fewer kids selected than reserved, CANCEL the extras ──
     // Cancelled status: token number is retired for the day (no gaps, no reuse)
@@ -741,10 +747,8 @@ async function doRegAll(){
     }
     showM(msg,'✅ Registered! Issuing tokens...','ok');
     const tokens=[];
-    // Use pre-reserved tokens if available, otherwise reserve now
-    if(!_reservedTokens.length){
-      await reserveTokenBlock(results.length, mob);
-    }
+    // Use pre-reserved tokens — ensureTokens NEVER wipes existing reservations
+    await ensureTokens(results.length, mob);
     // Cancel any extra reserved slots not matched by actual registered kids
     if(_reservedTokens.length > results.length){
       const extras = _reservedTokens.slice(results.length);
@@ -944,10 +948,9 @@ function resetCI(){
   clearInterval(window._ciTimer);
   // Clean up any unredeemed placeholder reservations
   if(_reservedTokens && _reservedTokens.length){
-    _reservedTokens.forEach(r=>sb('queue','DELETE',null,'id=eq.'+r.id+'&customer_name=eq.Reserving...').catch(()=>{}));
-    _reservedTokens=[];
+    const old=[..._reservedTokens]; _reservedTokens=[];
+    old.forEach(r=>sb('queue','PATCH',{status:'cancelled',customer_name:'Cancelled',customer_id:null},'id=eq.'+r.id).catch(()=>{}));
   }
-  _reservedTokens=[];
   // Full field reset
   const numEl=document.getElementById('lu-num');if(numEl)numEl.value='';
   ['lu-st','lu-kids','lu-act','lu-nf','lu-reg-sibling','lu-count'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
@@ -1022,9 +1025,9 @@ async function doGuest(){
   const btn=document.querySelector('#s-guest .btn-y');
   if(btn){btn.disabled=true;btn.textContent='Issuing...';}
   try{
-    // If tokens not yet reserved (edge case), reserve now
+    // Use pre-reserved tokens — ensureTokens NEVER wipes existing reservations
     if(!_guestReserved.length){
-      _guestReserved=await reserveTokenBlock(_guestCount, null);
+      _guestReserved = await reserveTokenBlock(_guestCount, null);
     }
     // Cancel extras if somehow fewer names than reserved
     if(_guestReserved.length > kidNames.length){
