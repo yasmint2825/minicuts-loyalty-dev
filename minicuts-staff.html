@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>[DEV] MiniCuts · Staff Queue</title>
+<title>🔴 DEV · MiniCuts Staff Queue</title>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{--y:#FFD600;--b:#1565C0;--bd:#0D47A1;--bm:#1976D2;--ok:#16A34A;--err:#DC2626;--warn:#D97706;--pink:#EC4899;--bg:#F0F4FF;--text:#1A1A2E;--muted:#6B7280;--border:#E5E7EB;--r:12px;--rs:8px;--fh:'Baloo 2',cursive;--fb:'Nunito',sans-serif;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -112,17 +113,45 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
 @keyframes ti{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 .toast.ok{border-left:4px solid var(--ok);}.toast.err{border-left:4px solid var(--err);}.toast.info{border-left:4px solid var(--b);}
 #clk{font-family:var(--fh);font-size:11px;font-weight:700;color:rgba(255,255,255,.7);}
+
+/* ── CHECKOUT MODAL ── */
+.co-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:none;align-items:center;justify-content:center;padding:16px;}
+.co-ov.show{display:flex !important;}
+.co-box{background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.co-hd{background:linear-gradient(135deg,#0D47A1,#1976D2);padding:16px 20px;border-radius:16px 16px 0 0;color:#fff;}
+.co-hd h2{font-family:'Baloo 2',cursive;font-size:16px;font-weight:900;margin:0;}
+.co-hd p{font-size:12px;opacity:.8;margin:3px 0 0;}
+.co-bd{padding:18px 20px;}
+.co-ft{padding:14px 20px;border-top:1px solid #E5E7EB;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.co-lbl{font-size:10.5px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:block;}
+.co-sres{border:1.5px solid #E5E7EB;border-radius:10px;overflow:hidden;margin-top:5px;background:#fff;max-height:240px;overflow-y:auto;}
+.co-sr{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;border-bottom:1px solid #E5E7EB;}
+.co-sr:last-child{border-bottom:none;}
+.co-sr:hover{background:#EFF6FF;}
+.co-lines{border:1.5px solid #E5E7EB;border-radius:10px;overflow:hidden;margin-bottom:12px;}
+.co-line{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #E5E7EB;}
+.co-line:last-child{border-bottom:none;}
+.co-tot{background:#F8FBFF;border:1.5px solid #E5E7EB;border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+.co-tr{display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0;color:#6B7280;}
+.co-tr b{color:#1A1A2E;}
+.co-tg{display:flex;justify-content:space-between;font-family:'Baloo 2',cursive;font-size:18px;font-weight:900;border-top:1.5px solid #E5E7EB;margin-top:8px;padding-top:9px;}
+.co-tg span:last-child{color:#1565C0;}
+.co-banner{background:#FEF9C3;border:1.5px solid #FDE047;border-radius:10px;padding:10px 13px;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.co-da{display:flex;align-items:center;gap:8px;background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:700;color:#16A34A;}
 </style>
 </head>
 <body>
+
+<!-- DEV BANNER -->
+<div style="background:#DC2626;color:#fff;text-align:center;font-family:'Baloo 2',cursive;font-weight:900;font-size:12px;padding:4px 0;letter-spacing:.05em;flex-shrink:0;">🔴 DEV / TEST ENVIRONMENT — NOT LIVE DATA</div>
 
 <!-- TOPBAR -->
 <div class="top">
   <div class="top-brand">🐼 MiniCuts <span style="opacity:.6;font-size:13px;font-weight:700;">Staff Panel</span></div>
   <div class="top-right">
     <div id="clk"></div>
-    <div class="badge-staff">✂️ Staff</div>
-    <a href="./index.html" target="_blank" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;">📋 Loyalty</a>
+    <div class="badge-staff" style="background:#DC2626;color:#fff;">🔴 DEV</div>
+    <a href="./dev-minicuts-index.html" target="_blank" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;">📋 Loyalty</a>
   </div>
 </div>
 
@@ -331,12 +360,21 @@ select.fi{appearance:none;-webkit-appearance:none;background:#fff url("data:imag
         <div class="card-title">🔗 Quick Links</div>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
           <a href="./minicuts-checkin.html" target="_blank" class="btn btn-b btn-full">👤 Customer Check-In Screen</a>
-          <a href="./index.html" target="_blank" class="btn btn-ghost btn-full">📋 Loyalty Dashboard</a>
+          <a href="./dev-minicuts-index.html" target="_blank" class="btn btn-ghost btn-full">📋 Loyalty Dashboard</a>
           <a href="./minicuts-game.html" target="_blank" class="btn btn-ghost btn-full">🎮 Games App</a>
-          <a href="./minicuts-backup.html" target="_blank" class="btn btn-ghost btn-full" style="border-color:#F59E0B;color:#B45309;">🗄️ Backup Panel</a>
+          <a href="./dev-minicuts-backup.html" target="_blank" class="btn btn-ghost btn-full" style="border-color:#F59E0B;color:#B45309;">🗄️ Backup Panel</a>
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="co-ov" id="co-ov">
+  <div class="co-box">
+    <div class="co-hd"><h2 id="co-ht">New Visit</h2><p id="co-hs"></p></div>
+    <div class="co-bd" id="co-bd"></div>
+    <div class="co-ft" id="co-ft"></div>
   </div>
 </div>
 
@@ -668,11 +706,12 @@ function buildRow(r){
     // Actions
     +'<td><div style="display:flex;gap:3px;flex-direction:column;">'
     +(done?'<button class="btn btn-ghost btn-sm" onclick="updS(\''+r.id+'\',\'waiting\')">↩ Undo</button>'
+       +'<button class="btn btn-b btn-sm" style="white-space:nowrap;" onclick="coOpen(\''+r.id+'\',\''+r.customer_id+'\',\''+escQ(r.customer_name)+'\',\''+r.mobile+'\')">➕ Add Service</button>'
     :cancelled?''
     :(!called?'<button class="btn btn-b btn-sm" style="white-space:nowrap;" onclick="updS(\''+r.id+'\',\'called\')">📢 Call</button>':'')+
      '<button class="btn btn-g btn-sm" style="white-space:nowrap;" '
        +(!called?'disabled title="Call the customer first" style="opacity:.4;cursor:not-allowed;" ':'')
-       +'onclick="markDone(\''+r.id+'\',\''+r.customer_id+'\',\''+escQ(r.customer_name)+'\',\''+r.mobile+'\')">✅ Stamp</button>'+
+       +'onclick="coOpen(\''+r.id+'\',\''+r.customer_id+'\',\''+escQ(r.customer_name)+'\',\''+r.mobile+'\')">✅ Checkout</button>'+
      '<button class="btn btn-sm" style="background:#F3F4F6;color:var(--muted);white-space:nowrap;" onclick="cancelToken(\''+r.id+'\',\''+escQ(r.customer_name)+'\')">✕</button>')
     +'</div></td>'
     +'</tr>';
@@ -1379,11 +1418,525 @@ async function markFreeWashGiven(id,name,btn){
   }
 }
 
-// AUTO REFRESH
-setInterval(()=>{if(document.getElementById('t-queue').classList.contains('active'))loadQ();},120000);
+// ═══════════════════════════════════════════════════
+// CHECKOUT / SERVICE SELECTION MODAL
+// ═══════════════════════════════════════════════════
+const FALLBACK_SVCS = [
+  {id:'f1',name:'Classic Haircut - Boy',    code:'B1',cat:'haircut',   gender:'boys', price:40, vat:'yes',description:''},
+  {id:'f2',name:'Haircut with Tattoo - Boy',code:'B2',cat:'haircut',   gender:'boys', price:60, vat:'yes',description:''},
+  {id:'f3',name:'Organic Hair Wash - Boy',  code:'B3',cat:'wash',      gender:'boys', price:20, vat:'yes',description:''},
+  {id:'f4',name:'Hair Spa - Boy',           code:'B4',cat:'treatment', gender:'boys', price:50, vat:'yes',description:''},
+  {id:'f5',name:'Color Spray - Boy',        code:'B5',cat:'styling',   gender:'boys', price:40, vat:'yes',description:''},
+  {id:'f6',name:'Haircut Short - Girl',     code:'G1',cat:'haircut',   gender:'girls',price:45, vat:'yes',description:''},
+  {id:'f7',name:'Haircut Long - Girl',      code:'G2',cat:'haircut',   gender:'girls',price:50, vat:'yes',description:''},
+  {id:'f8',name:'Bangs - Girl',             code:'G3',cat:'haircut',   gender:'girls',price:30, vat:'yes',description:''},
+  {id:'f9',name:'Organic Hair Wash - Girl', code:'G4',cat:'wash',      gender:'girls',price:25, vat:'yes',description:''},
+  {id:'f10',name:'Hair Styling / Nails',    code:'G5',cat:'styling',   gender:'girls',price:110,vat:'yes',description:''},
+  {id:'f11',name:'Hair Spa Short - Girl',   code:'G6',cat:'treatment', gender:'girls',price:65, vat:'yes',description:''},
+  {id:'f12',name:'Haircut + Hair Wash + Spray (Short)',code:'',cat:'package',gender:'girls',price:90,vat:'yes',description:''},
+  {id:'f13',name:'Prince Adventure Package',code:'',cat:'package',gender:'boys',price:85,vat:'yes',description:''},
+  {id:'f14',name:'Princess Sparkling Diva - Short',code:'',cat:'package',gender:'girls',price:99,vat:'yes',description:''},
+  {id:'f15',name:'Birthday Princess Package 1',code:'',cat:'package',gender:'girls',price:175,vat:'yes',description:''},
+  {id:'f16',name:'Manicure + Pedicure',     code:'',cat:'other',gender:'girls',price:75,vat:'yes',description:''},
+];
+
+let _coSvcs=null, _coCpns=null, _co=null;
+const CO_VAT_LS='mc_ss_vat_cache';
+
+function coFmt(n){ return 'AED '+(parseFloat(n)||0).toFixed(2); }
+function coIsExp(d){ return d ? new Date(d)<new Date() : false; }
+function coVat(){ try{return JSON.parse(localStorage.getItem(CO_VAT_LS)||'{}');}catch(e){return{};} }
+
+async function coLoadSvcs(){
+  if(_coSvcs) return _coSvcs;
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/salon_services?select=*&status=eq.active&order=name.asc',
+      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const d=await r.json();
+    _coSvcs=(Array.isArray(d)&&d.length)?d:FALLBACK_SVCS;
+  }catch(e){ _coSvcs=FALLBACK_SVCS; }
+  return _coSvcs;
+}
+
+async function coLoadCpns(){
+  if(_coCpns) return _coCpns;
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/salon_coupons?select=*&status=eq.active',
+      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const d=await r.json();
+    _coCpns=Array.isArray(d)?d:[];
+  }catch(e){ _coCpns=[]; }
+  return _coCpns;
+}
+
+// ── OPEN ──
+async function coOpen(qid,cid,name,mob){
+  const ov=document.getElementById('co-ov');
+  document.getElementById('co-ht').textContent='✂️ Checkout · '+name;
+  document.getElementById('co-hs').textContent='Loading…';
+  document.getElementById('co-bd').innerHTML='<div style="padding:40px;text-align:center;color:#6B7280;font-size:14px;">⏳ Loading…</div>';
+  document.getElementById('co-ft').innerHTML='<button class="btn btn-ghost" onclick="coClose()">✕ Cancel</button>';
+  ov.classList.add('show');
+
+  try{
+    await Promise.all([coLoadSvcs(),coLoadCpns()]);
+
+    try{
+      const vr=await fetch(SB_URL+'/rest/v1/salon_vat?select=*&id=eq.1&limit=1',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+      const vd=await vr.json();
+      if(vd&&vd[0]) localStorage.setItem(CO_VAT_LS,JSON.stringify(vd[0]));
+    }catch(e){}
+
+    let cust=null;
+    const custId=(cid&&cid!=='null'&&cid!=='')?cid:null;
+    if(custId){
+      try{
+        const rows=await sbRaw('customers','GET',null,'select=*&id=eq.'+custId);
+        cust=(rows&&rows[0])||null;
+      }catch(e){}
+    }
+
+    const PAID=paidNeeded();
+    const stamps=Number(cust?.stamps||0);
+    const expired=cust?coIsExp(cust.expiry_date):false;
+
+    const qRow=_qdata.find(x=>x.id===qid);
+    const already=qRow&&qRow.status==='done';
+
+    _co={qid,custId,name,mob,cust,PAID,stamps,expired,
+      freeOK:!!(cust&&!expired&&stamps>=PAID),
+      lines:[],coupon:null,pct:0,freeWash:false,wantInv:false,q:'',showAll:false,already};
+
+    coRender();
+  }catch(e){
+    document.getElementById('co-bd').innerHTML='<div style="padding:24px;color:#DC2626;font-weight:700;">Error: '+e.message+'</div>';
+  }
+}
+
+function coClose(){
+  document.getElementById('co-ov').classList.remove('show');
+  _co=null;
+}
+document.getElementById('co-ov').addEventListener('click',function(e){if(e.target===this)coClose();});
+
+// ── CALC ──
+function coCalc(){
+  const s=_co, vatRate=parseFloat(coVat().rate)||0;
+  const sub=s.lines.reduce((a,l)=>a+(parseFloat(l.price)||0),0);
+  let disc=0,dlbl='';
+  if(s.freeWash){disc=sub;dlbl='🎁 Free Hair Wash (100%)';}
+  else if(s.coupon){
+    const cp=s.coupon;
+    if(cp.type==='pct'){disc=sub*(parseFloat(cp.value)||0)/100;dlbl=cp.code+' · '+cp.value+'% off';}
+    else if(cp.type==='flat'){disc=Math.min(sub,parseFloat(cp.value)||0);dlbl=cp.code+' · AED '+cp.value+' off';}
+    else{disc=s.lines.reduce((m,l)=>Math.max(m,parseFloat(l.price)||0),0);dlbl=cp.code+' · Free service';}
+  } else if(s.pct>0){disc=sub*s.pct/100;dlbl='Manual '+s.pct+'% off';}
+  disc=Math.min(disc,sub);
+  const ratio=sub>0?(1-disc/sub):0;
+  let vat=0;
+  if(!s.freeWash) s.lines.forEach(l=>{if(l.vat==='yes'&&vatRate>0)vat+=(parseFloat(l.price)||0)*ratio*vatRate/100;});
+  const total=Math.max(0,(sub-disc)+vat);
+  return{sub,disc,dlbl,vatRate,vat,total};
+}
+
+// ── RENDER ──
+function coRender(){
+  if(!_co)return;
+  const s=_co, c=coCalc();
+  const CAT={haircut:'Haircut',wash:'Hair Wash',styling:'Styling',color:'Color',treatment:'Treatment',package:'Package',other:'Other'};
+  const GN={boys:'👦',girls:'👧',both:'👦👧'};
+
+  document.getElementById('co-ht').textContent=(s.freeWash?'🎁 Free Wash · ':(s.already?'➕ Add Service · ':'✂️ Checkout · '))+s.name;
+  document.getElementById('co-hs').textContent=s.cust
+    ?s.stamps+'/'+s.PAID+' stamps · '+(s.expired?'⚠️ Expired':'Active passport')
+    :'👤 Guest — no loyalty card';
+
+  let bd='';
+
+  if(s.freeOK&&!s.already){
+    bd+=`<div class="co-banner">
+      <div style="font-size:26px;">🎁</div>
+      <div style="flex:1;"><div style="font-weight:800;font-size:13px;">${s.name} has earned a Free Hair Wash!</div>
+      <div style="font-size:11.5px;color:#78350F;margin-top:2px;">${s.stamps}/${s.PAID} stamps — 100% off, resets card.</div></div>
+      <button class="btn btn-sm" style="background:${s.freeWash?'#FEF3C7;color:#92400E':'#16A34A;color:#fff'};" onclick="coTogFree()">${s.freeWash?'↩ Undo':'Apply 🎁'}</button>
+    </div>`;
+  }
+
+  // Step 1: Service search
+  bd+=`<div style="margin-bottom:14px;">
+    <span class="co-lbl">${s.already?'Add Service':'1 · Pick service'}${s.freeWash?' <span style="opacity:.6;font-weight:600;">(optional)</span>':''}</span>
+    <div style="position:relative;">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);">🔍</span>
+      <input id="co-q" class="fi" type="text" autocomplete="off"
+        style="padding-left:32px;"
+        placeholder="Type name or code — e.g. Haircut, B1, Wash…"
+        value="${(s.q||'').replace(/"/g,'&quot;')}"
+        oninput="_co.q=this.value;coSvcs()">
+    </div>
+    ${s.cust?`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+      <span style="font-size:11px;color:#6B7280;">${s.showAll?'All services':'Showing '+(s.cust.gender==='girl'?'👧 girls':'👦 boys')+' + both'}</span>
+      <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 8px;" onclick="coTogAll()">${s.showAll?'Gender only':'Show all'}</button>
+    </div>`:''}
+    <div id="co-r"></div>
+  </div>`;
+
+  // Selected lines
+  if(s.lines.length){
+    bd+='<div class="co-lines">';
+    s.lines.forEach((l,i)=>{
+      bd+=`<div class="co-line">
+        <div style="flex:1;font-size:12.5px;font-weight:700;">${l.name}${l.code?' <span style="font-size:10px;color:#6B7280;">('+l.code+')</span>':''}</div>
+        <div style="font-weight:800;color:#1565C0;white-space:nowrap;">${coFmt(l.price)}</div>
+        <button onclick="coRm(${i})" style="background:none;border:none;cursor:pointer;color:#9CA3AF;font-size:16px;padding:0 3px;">✕</button>
+      </div>`;
+    });
+    bd+='</div>';
+  }
+
+  // Step 2: Discount
+  if(!s.freeWash){
+    const applied=s.coupon||s.pct>0;
+    bd+=`<div style="margin-bottom:14px;">
+      <span class="co-lbl">${s.already?'Discount':'2 · Discount'} <span style="opacity:.6;font-weight:600;">(optional)</span></span>`;
+    if(applied){
+      bd+=`<div class="co-da"><span style="flex:1;">✓ ${c.dlbl} (−${coFmt(c.disc)})</span>
+        <button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="coClearD()">Remove</button></div>`;
+    }else{
+      bd+=`<div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="flex:2;min-width:130px;">
+          <div style="font-size:10.5px;font-weight:700;color:#6B7280;margin-bottom:3px;">Coupon code</div>
+          <div style="display:flex;gap:5px;">
+            <input id="co-cpn" class="fi" type="text" placeholder="e.g. EID20"
+              style="text-transform:uppercase;font-size:12px;padding:7px 9px;"
+              onkeydown="if(event.key==='Enter')coApplyCpn()">
+            <button class="btn btn-b btn-sm" onclick="coApplyCpn()">Apply</button>
+          </div>
+        </div>
+        <div style="flex:1;min-width:110px;">
+          <div style="font-size:10.5px;font-weight:700;color:#6B7280;margin-bottom:3px;">or Discount %</div>
+          <div style="display:flex;gap:5px;">
+            <input id="co-pct" class="fi" type="number" min="0" max="100" placeholder="0"
+              style="font-size:12px;padding:7px 9px;"
+              onkeydown="if(event.key==='Enter')coApplyPct()">
+            <button class="btn btn-ghost btn-sm" onclick="coApplyPct()">Set</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    bd+=`</div>`;
+  }
+
+  // Stylist assignment (for add-service flow, or always shown so staff can confirm)
+  {
+    const qRow=_qdata.find(x=>x.id===s.qid)||{};
+    const sty1=qRow.stylist||'', sty2=qRow.stylist2||'';
+    const sty1Opts='<option value="">— Stylist 1 —</option>'+STYLISTS.map(st=>'<option value="'+st+'"'+(sty1===st?' selected':'')+'>'+st+'</option>').join('');
+    const sty2Opts='<option value="">— Stylist 2 —</option>'+STYLISTS.map(st=>'<option value="'+st+'"'+(sty2===st?' selected':'')+'>'+st+'</option>').join('');
+    bd+=`<div style="margin-bottom:14px;">
+      <span class="co-lbl">Stylist(s)</span>
+      <div style="display:flex;gap:6px;">
+        <select id="co-sty1" class="fi" style="flex:1;font-size:12.5px;padding:7px 9px;" onchange="updF('${s.qid}','stylist',this.value)">${sty1Opts}</select>
+        <select id="co-sty2" class="fi" style="flex:1;font-size:12.5px;padding:7px 9px;" onchange="updF('${s.qid}','stylist2',this.value)">${sty2Opts}</select>
+      </div>
+    </div>`;
+  }
+
+  // Step 3: Totals
+  bd+=`<div class="co-tot">
+    <div class="co-tr"><span>Subtotal</span><b>${coFmt(c.sub)}</b></div>
+    ${c.disc>0?`<div class="co-tr" style="color:#16A34A;font-weight:700;"><span>${c.dlbl}</span><span>−${coFmt(c.disc)}</span></div>`:''}
+    ${c.vat>0?`<div class="co-tr"><span>VAT (${c.vatRate}%)</span><b>${coFmt(c.vat)}</b></div>`:''}
+    <div class="co-tg"><span>Total</span><span>${coFmt(c.total)}</span></div>
+  </div>`;
+
+  document.getElementById('co-bd').innerHTML=bd;
+
+  const pmtVal=(_qdata.find(x=>x.id===s.qid)||{}).payment_type||'';
+  const pmtOpts=['','Cash','Credit'].map(p=>'<option value="'+p+'"'+(pmtVal===p?' selected':'')+'>'+(p||'— Pay —')+'</option>').join('');
+
+  document.getElementById('co-ft').innerHTML=`
+    <select id="co-pmt" class="fi" style="flex:1;min-width:90px;font-size:12.5px;padding:7px 9px;" onchange="updF('${s.qid}','payment_type',this.value)">${pmtOpts}</select>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer;">
+      <input type="checkbox" id="co-inv" ${s.wantInv?'checked':''} onchange="_co.wantInv=this.checked" style="width:15px;height:15px;">
+      🧾 Invoice
+    </label>
+    <button class="btn btn-ghost btn-sm" onclick="coShareWA()" title="Share last invoice on WhatsApp">💬 WA</button>
+    <button class="btn btn-ghost btn-sm" onclick="coClose()">Cancel</button>
+    <button class="btn ${s.freeWash?'btn-y':'btn-g'}" id="co-ok" onclick="coConfirm()" style="min-width:130px;">
+      ${s.freeWash?'🎁 Give Free Wash':(s.already?'✅ Checkout':'✅ Add Stamp '+(s.stamps+1)+'/'+s.PAID)}
+    </button>`;
+
+  coSvcs();
+}
+
+function coSvcs(){
+  const box=document.getElementById('co-r');if(!box)return;
+  const s=_co, q=(s.q||'').trim().toLowerCase();
+  if(!q){box.innerHTML='';return;}
+  const CAT={haircut:'Haircut',wash:'Hair Wash',styling:'Styling',color:'Color',treatment:'Treatment',package:'Package',other:'Other'};
+  const GN={boys:'👦',girls:'👧',both:'👦👧'};
+  const all=_coSvcs||FALLBACK_SVCS;
+  const filtered=all.filter(sv=>{
+    if(!s.showAll&&s.cust){
+      const g=s.cust.gender==='girl'?'girls':'boys';
+      if(sv.gender!==g&&sv.gender!=='both')return false;
+    }
+    return(sv.name||'').toLowerCase().includes(q)||(sv.code||'').toLowerCase().includes(q)||(sv.cat||'').toLowerCase().includes(q);
+  }).slice(0,8);
+  if(!filtered.length){box.innerHTML='<div style="padding:10px 12px;font-size:12px;color:#6B7280;">No match — try different keywords</div>';return;}
+  box.innerHTML='<div class="co-sres">'+filtered.map(sv=>`
+    <div class="co-sr" onclick="coAdd('${sv.id}')">
+      <div style="flex:1;">
+        <div style="font-size:12.5px;font-weight:700;">${sv.name}${sv.code?' <span style="background:#F0F4FF;border-radius:4px;padding:0 4px;font-size:10px;">'+sv.code+'</span>':''}</div>
+        <div style="font-size:11px;color:#6B7280;">${GN[sv.gender]||''} ${CAT[sv.cat]||sv.cat}</div>
+      </div>
+      <div style="font-family:'Baloo 2',cursive;font-size:13px;font-weight:800;color:#1565C0;white-space:nowrap;">${coFmt(sv.price)}</div>
+      <div style="color:#16A34A;font-size:18px;margin-left:4px;">＋</div>
+    </div>`).join('')+'</div>';
+}
+
+function coTogAll(){_co.showAll=!_co.showAll;coRender();setTimeout(()=>{const e=document.getElementById('co-q');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},20);}
+
+function coAdd(id){
+  const all=_coSvcs||FALLBACK_SVCS;
+  const sv=all.find(x=>x.id===id);if(!sv)return;
+  _co.lines.push({id:sv.id,name:sv.name,code:sv.code||'',price:parseFloat(sv.price)||0,vat:sv.vat||'yes'});
+  _co.q='';coRender();
+  setTimeout(()=>{const e=document.getElementById('co-q');if(e)e.focus();},20);
+}
+
+function coRm(i){_co.lines.splice(i,1);coRender();}
+
+function coTogFree(){
+  _co.freeWash=!_co.freeWash;
+  if(_co.freeWash){
+    _co.coupon=null;_co.pct=0;
+    if(!_co.lines.length){
+      const g=_co.cust?.gender==='girl'?'girls':'boys';
+      const all=_coSvcs||FALLBACK_SVCS;
+      const w=all.find(sv=>sv.cat==='wash'&&(sv.gender===g||sv.gender==='both'));
+      if(w)_co.lines.push({id:w.id,name:w.name,code:w.code||'',price:parseFloat(w.price)||0,vat:w.vat||'yes'});
+    }
+  }
+  coRender();
+}
+
+async function coApplyCpn(){
+  const el=document.getElementById('co-cpn');
+  const code=(el?el.value:'').trim().toUpperCase();
+  if(!code){toast('Enter a coupon code','err');return;}
+  const cp=(_coCpns||[]).find(c=>(c.code||'').toUpperCase()===code);
+  if(!cp){toast('Coupon "'+code+'" not found','err');return;}
+  if(coIsExp(cp.expiry)){toast('Coupon expired','err');return;}
+  const sub=_co.lines.reduce((s,l)=>s+(parseFloat(l.price)||0),0);
+  if(!sub){toast('Add a service first','err');return;}
+  if(cp.min&&sub<parseFloat(cp.min)){toast('Min. purchase AED '+cp.min+' required','err');return;}
+  _co.coupon=cp;_co.pct=0;_co.freeWash=false;
+  toast('Coupon '+cp.code+' applied ✅');coRender();
+}
+
+function coApplyPct(){
+  const el=document.getElementById('co-pct');
+  const v=parseFloat(el?el.value:0)||0;
+  if(v<=0||v>100){toast('Enter % between 1-100','err');return;}
+  _co.pct=v;_co.coupon=null;_co.freeWash=false;coRender();
+}
+
+function coClearD(){_co.coupon=null;_co.pct=0;coRender();}
+
+// ── CONFIRM ──
+async function coConfirm(){
+  const s=_co;if(!s)return;
+  if(!s.freeWash&&!s.lines.length){toast('Add at least one service ❌','err');return;}
+  const c=coCalc();
+  const btn=document.getElementById('co-ok');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    const now=new Date().toISOString();
+    const qRow=_qdata.find(x=>x.id===s.qid);
+    const stylist=qRow?.stylist||null,stylist2=qRow?.stylist2||null;
+    const remark=qRow?.remark||null,tip=qRow?.tip||null;
+    const pmt=document.getElementById('co-pmt')?.value||(qRow?.payment_type||null);
+
+    if(s.freeWash){
+      if(!s.custId)throw new Error('No customer linked');
+      const rows=await sbRaw('customers','GET',null,'select=*&id=eq.'+s.custId);
+      const cu=rows&&rows[0];if(!cu)throw new Error('Customer not found');
+      if((cu.stamps||0)<paidNeeded())throw new Error('Not enough stamps');
+      await sbRaw('cycles','POST',{customer_id:s.custId,stamps_earned:cu.stamps,first_stamp_date:cu.first_stamp_date,expiry_date:cu.expiry_date,ended_at:now,ended_by:'redeemed'}).catch(()=>{});
+      await sbRaw('customers','PATCH',{stamps:0,redemptions:(cu.redemptions||0)+1,first_stamp_date:null,expiry_date:null,last_visit_date:now},'id=eq.'+s.custId);
+      await sbRaw('visits','POST',{customer_id:s.custId,type:'free',stamp_count_after:0,stylist,stylist2});
+      await sbRaw('queue','PATCH',{status:'done',done_at:now,service_value:0,payment_type:pmt,remark,tip},'id=eq.'+s.qid);
+      if(_custMap[s.custId]){_custMap[s.custId].stamps=0;_custMap[s.custId].expiry_date=null;}
+      if(qRow){qRow.status='done';qRow.service_value=0;qRow.payment_type=pmt;}
+      toast('🚿 Free wash given to '+s.name+' — card reset!');
+      const inv=coMkInv(s,c,0);
+      if(s.wantInv)coPDF(inv);
+      _lastInv=inv;
+      coClose();renderQ();renderHist();updateStats();
+    }else{
+      if(!pmt){toast('Select Cash or Credit before checkout ❌','err');if(btn){btn.disabled=false;btn.textContent=s.already?'✅ Checkout':'✅ Add Stamp '+(s.stamps+1)+'/'+s.PAID;}return;}
+      const prevVal=parseFloat(qRow?.service_value||0)||0;
+      const svcVal=c.total>0?(prevVal+c.total):prevVal;
+
+      if(s.already){
+        // Already stamped — just add services/value to the existing record, no new stamp
+        await sbRaw('queue','PATCH',{service_value:svcVal,payment_type:pmt,remark,tip},'id=eq.'+s.qid);
+        if(qRow){qRow.service_value=svcVal;qRow.payment_type=pmt;}
+        toast(s.name+' — added services · '+coFmt(c.total)+' (total '+coFmt(svcVal)+')');
+        const inv=coMkInv(s,c,s.stamps);
+        if(s.wantInv)coPDF(inv);
+        _lastInv=inv;
+        coClose();renderQ();renderHist();updateStats();
+        return;
+      }
+
+      await sbRaw('queue','PATCH',{status:'done',done_at:now,service_value:svcVal,payment_type:pmt,remark,tip},'id=eq.'+s.qid);
+      let ns=s.stamps;
+      if(s.custId){
+        const rows=await sbRaw('customers','GET',null,'select=*&id=eq.'+s.custId);
+        const cu=rows&&rows[0];
+        if(cu){
+          const td=now.split('T')[0];
+          const dupe=await sbRaw('visits','GET',null,'select=id&customer_id=eq.'+s.custId+'&type=eq.paid&created_at=gte.'+td+'T00:00:00&limit=1');
+          if(dupe&&dupe.length){
+            toast(s.name+' already stamped today ⚠️','err');
+            await sbRaw('queue','PATCH',{status:'called'},'id=eq.'+s.qid);
+            if(btn){btn.disabled=false;btn.textContent='✅ Add Stamp '+(s.stamps+1)+'/'+s.PAID;}return;
+          }
+          ns=(cu.stamps||0)+1;
+          const months=cu.gender==='girl'?girlMonths():boyMonths();
+          const fs=cu.first_stamp_date||now;
+          const exp=cu.expiry_date||(()=>{const d=new Date(fs);d.setMonth(d.getMonth()+months);return d.toISOString();})();
+          await sbRaw('customers','PATCH',{stamps:ns,first_stamp_date:fs,expiry_date:exp,last_visit_date:now},'id=eq.'+s.custId);
+          await sbRaw('visits','POST',{customer_id:s.custId,type:'paid',stamp_count_after:ns,cycle_expiry:exp,
+            stylist,stylist2,remark:s.lines.map(l=>l.name).join(', '),tip,service_value:svcVal});
+          if(s.coupon){try{await sbRaw('salon_coupons','PATCH',{uses:(s.coupon.uses||0)+1},'id=eq.'+s.coupon.id);}catch(e){}}
+          if(_custMap[s.custId]){_custMap[s.custId].stamps=ns;_custMap[s.custId].expiry_date=exp;}
+          if(qRow){qRow.status='done';qRow.service_value=svcVal;qRow.payment_type=pmt;}
+          toast(s.name+' — Stamp '+ns+'/'+paidNeeded()+(ns>=paidNeeded()?' 🎁 Free wash ready!':'')+(svcVal?' · '+coFmt(svcVal):''));
+          const inv=coMkInv(s,c,ns);
+          if(s.wantInv)coPDF(inv);
+          _lastInv=inv;
+          coClose();renderQ();renderHist();updateStats();
+          showWAPrompt(s.name,ns,s.mob,cu.parent,cu.gender,stylist,stylist2,remark,tip,svcVal);
+        }
+      }else{
+        if(qRow){qRow.status='done';qRow.service_value=svcVal;qRow.payment_type=pmt;}
+        toast(s.name+' done (guest)'+(svcVal?' · '+coFmt(svcVal):''),'info');
+        const inv=coMkInv(s,c,0);
+        if(s.wantInv)coPDF(inv);
+        _lastInv=inv;
+        coClose();renderQ();renderHist();updateStats();
+      }
+    }
+  }catch(e){
+    toast('Error: '+e.message,'err');
+    if(btn&&_co){btn.disabled=false;btn.textContent=_co.freeWash?'🎁 Give Free Wash':(_co.already?'✅ Checkout':'✅ Add Stamp '+(_co.stamps+1)+'/'+_co.PAID);}
+  }
+}
+
+// ── INVOICE DATA ──
+const CO_CTR='mc_inv_n';
+function coNextN(){let n=parseInt(localStorage.getItem(CO_CTR)||'0')+1;localStorage.setItem(CO_CTR,String(n));return'MC-'+new Date().getFullYear()+'-'+String(n).padStart(4,'0');}
+function coMkInv(s,c,ns){
+  const v=coVat();
+  return{no:coNextN(),date:new Date().toISOString(),name:s.name,mob:s.mob,gender:s.cust?.gender||'',
+    lines:s.lines.map(l=>({name:l.name,code:l.code,price:parseFloat(l.price)||0})),
+    sub:c.sub,disc:c.disc,dlbl:c.dlbl,vatRate:c.vatRate,vat:c.vat,total:c.total,
+    freeWash:s.freeWash,ns,PAID:s.PAID,biz:v.biz||'MiNiCUTS FZCO',trn:v.reg||''};
+}
+
+let _lastInv=null;
+
+// ── PDF GENERATION (jsPDF) ──
+function coBuildPDF(inv){
+  const f=n=>(parseFloat(n)||0).toFixed(2);
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:[80,180+inv.lines.length*6]});
+  const W=80; let y=8;
+  doc.setFont('helvetica','bold');doc.setFontSize(13);
+  doc.text(inv.biz,W/2,y,{align:'center'});y+=5;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);
+  doc.text('Kids & Teens Hair Salon · Dubai Silicon Oasis',W/2,y,{align:'center'});y+=4;
+  if(inv.trn){doc.text('TRN: '+inv.trn,W/2,y,{align:'center'});y+=4;}
+  if(inv.vat>0){doc.setFont('helvetica','bold');doc.text('TAX INVOICE',W/2,y,{align:'center'});doc.setFont('helvetica','normal');y+=4;}
+  y+=2;
+  doc.setLineDashPattern([1,1],0);doc.line(4,y,W-4,y);y+=5;
+  doc.setFontSize(8);
+  doc.text('Invoice: '+inv.no,4,y);y+=4;
+  doc.text('Date: '+new Date(inv.date).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),4,y);y+=4;
+  doc.text('Customer: '+inv.name+(inv.gender?(inv.gender==='girl'?' (Girl)':' (Boy)'):''),4,y);y+=4;
+  if(inv.mob&&!String(inv.mob).startsWith('GUEST')){doc.text('Mobile: '+inv.mob,4,y);y+=4;}
+  y+=1;doc.line(4,y,W-4,y);y+=5;
+
+  doc.setFont('helvetica','bold');
+  doc.text('SERVICE',4,y);doc.text('AED',W-4,y,{align:'right'});y+=4;
+  doc.setFont('helvetica','normal');
+  if(inv.lines.length){
+    inv.lines.forEach(l=>{
+      const nm=l.name+(l.code?' ('+l.code+')':'');
+      const lines=doc.splitTextToSize(nm,W-22);
+      lines.forEach((ln,i)=>{
+        doc.text(ln,4,y);
+        if(i===0)doc.text(f(l.price),W-4,y,{align:'right'});
+        y+=4;
+      });
+    });
+  }else{
+    doc.text('🎁 Free Hair Wash',W/2,y,{align:'center'});y+=4;
+  }
+  y+=1;doc.line(4,y,W-4,y);y+=5;
+
+  doc.text('Subtotal',4,y);doc.text(f(inv.sub),W-4,y,{align:'right'});y+=4;
+  if(inv.disc>0){doc.text(inv.dlbl,4,y);doc.text('-'+f(inv.disc),W-4,y,{align:'right'});y+=4;}
+  if(inv.vat>0){doc.text('VAT ('+inv.vatRate+'%)',4,y);doc.text(f(inv.vat),W-4,y,{align:'right'});y+=4;}
+  y+=1;doc.setLineDashPattern([],0);doc.setLineWidth(0.4);doc.line(4,y,W-4,y);y+=5;
+  doc.setFont('helvetica','bold');doc.setFontSize(11);
+  doc.text('TOTAL',4,y);doc.text('AED '+f(inv.total),W-4,y,{align:'right'});y+=7;
+
+  doc.setFont('helvetica','normal');doc.setFontSize(8);
+  if(inv.freeWash){doc.text('🎁 Loyalty Reward Redeemed',W/2,y,{align:'center'});y+=5;}
+  else if(inv.ns>0){doc.text('⭐ Stamp '+inv.ns+'/'+inv.PAID,W/2,y,{align:'center'});y+=5;}
+  doc.setLineDashPattern([1,1],0);doc.line(4,y,W-4,y);y+=5;
+  doc.text('Thank you for visiting MiNiCUTS!',W/2,y,{align:'center'});y+=4;
+  doc.text('See you next time ✂️',W/2,y,{align:'center'});
+
+  return doc;
+}
+
+function coPDF(inv){
+  try{
+    const doc=coBuildPDF(inv);
+    doc.save(inv.no+'.pdf');
+    toast('🧾 Invoice PDF downloaded — '+inv.no);
+  }catch(e){toast('PDF error: '+e.message,'err');}
+}
+
+// Share last invoice on WhatsApp (file share via Web Share API if available, else WA chat link)
+async function coShareWA(){
+  const inv=_lastInv;
+  if(!inv){toast('No invoice generated yet — checkout with 🧾 Invoice ticked first','err');return;}
+  try{
+    const doc=coBuildPDF(inv);
+    const blob=doc.output('blob');
+    const file=new File([blob],inv.no+'.pdf',{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Invoice '+inv.no,text:'Your MiNiCUTS invoice '+inv.no});
+    }else{
+      // Fallback: download PDF + open WhatsApp chat so staff can attach manually
+      doc.save(inv.no+'.pdf');
+      const num=toWANum(inv.mob||'');
+      const msg=encodeURIComponent('Hi! Here is your MiNiCUTS invoice '+inv.no+' (AED '+(parseFloat(inv.total)||0).toFixed(2)+'). The PDF has been downloaded — please attach it here. Thank you! 🐼');
+      window.open('https://wa.me/'+num+'?text='+msg,'_blank');
+      toast('PDF downloaded — attach it in the WhatsApp chat that opened','info');
+    }
+  }catch(e){toast('Share error: '+e.message,'err');}
+}
+
 
 // INIT — load config from DB first, then load queue
 loadAllConfig().then(()=>{loadQ();populateStyFilter();});
 </script>
-<div style="position:fixed;bottom:0;left:0;right:0;background:#DC2626;color:#fff;text-align:center;font-weight:900;font-size:13px;padding:4px;z-index:99999;font-family:monospace;letter-spacing:.05em;">⚠️ DEV ENVIRONMENT — NOT PRODUCTION</div></body>
+</body>
 </html>
